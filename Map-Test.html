@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>腾讯地图示例</title>
+    <style type="text/css">
+      #container {
+        /*地图(容器)显示大小*/
+        width: 1800px;
+        height: 900px;
+      }
+    </style>
+    <script>
+      // 异步加载 API
+      function loadScript() {
+        var script = document.createElement("script");
+        script.type = "text/javascript";
+        script.src =
+          "https://map.qq.com/api/gljs?v=1.exp&key=3HGBZ-SKRCT-UKNXT-V7KT6-T5LI2-XGF5F&callback=initMap";
+        document.body.appendChild(script);
+      }
+
+      //地图初始化函数
+      function initMap() {
+        // 先设置一个默认中心点
+        var defaultCenter = new TMap.LatLng(39.961492, 116.358201); //纬度，经度
+        var map = new TMap.Map(document.getElementById("container"), {
+          center: defaultCenter, //设置地图中心点坐标
+          zoom: 15, //设置地图缩放级别
+          pitch: 0, //设置俯仰角
+          rotation: 0, //设置地图旋转角度
+        });
+
+        // 尝试使用 H5 定位（适用于移动端）
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            function (position) {
+              var lat = position.coords.latitude;
+              var lng = position.coords.longitude;
+              var userCenter = new TMap.LatLng(lat, lng);
+              map.setCenter(userCenter);
+              console.log("H5 定位成功，设置地图中心点为:", lat, lng);
+            },
+            function (error) {
+              console.error("H5 定位失败:", error.message);
+              // H5 定位失败，尝试使用 IP 定位
+              ipLocate(map);
+            }
+          );
+        } else {
+          console.error("不支持 H5 定位");
+          // 不支持 H5 定位，尝试使用 IP 定位
+          ipLocate(map);
+        }
+      }
+
+      // IP 定位函数
+      function ipLocate(map) {
+        var key = "3HGBZ-SKRCT-UKNXT-V7KT6-T5LI2-XGF5F";
+        var url = `https://apis.map.qq.com/ws/location/v1/ip?key=${key}`;
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              var response = JSON.parse(xhr.responseText);
+              if (response.status === 0) {
+                var lat = response.result.location.lat;
+                var lng = response.result.location.lng;
+                var ipCenter = new TMap.LatLng(lat, lng);
+                map.setCenter(ipCenter);
+                console.log("IP 定位成功，设置地图中心点为:", lat, lng);
+              } else {
+                console.error("IP 定位 API 返回错误:", response.message);
+              }
+            } else {
+              console.error("IP 定位 API 请求失败，状态码:", xhr.status);
+            }
+          }
+        };
+        xhr.send();
+      }
+    </script>
+  </head>
+  <body onload="loadScript()">
+    <!-- 定义地图显示容器 -->
+    <div id="container"></div>
+  </body>
+</html>
